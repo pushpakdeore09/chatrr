@@ -180,57 +180,53 @@ const RightPanel: React.FC<RightPanelProps> = ({
           </div>
 
           {/* Messages Scrollable Area */}
-          <div className="flex-grow overflow-y-auto px-6 py-4 bg-gray-50 dark:bg-gray-700">
+         <div className="flex-grow overflow-y-auto px-6 py-4 bg-gray-50 dark:bg-gray-700">
             <div className="flex flex-col space-y-4">
               {messages.map((msg, index) => {
-                console.log("Message object: ", msg); // Log the entire msg object
                 return (
                   <div
                     key={index}
-                    className={`flex ${
-                      msg.sender._id === user?._id
-                        ? "justify-end"
-                        : "justify-start"
-                    }`}
+                    className={`flex ${msg.sender._id === user?._id ? "justify-end" : "justify-start"}`}
                   >
-                    <div
-                      className={`max-w-xs p-3 rounded-lg text-sm ${
-                        msg.sender._id === user?._id
-                          ? "bg-slate-500 text-white"
-                          : "bg-gray-200 text-black"
-                      }`}
-                    >
-                      {/* Sender's Name */}
-                      {msg.sender._id !== user?._id && (
-                        <div className="font-semibold">
-                          {msg.sender.firstName} {msg.sender.lastName}
+                    {/* Entire message container */}
+                    <ContextMenu>
+                      <ContextMenuTrigger>
+                        <div
+                          className={`max-w-xs p-3 rounded-lg text-sm ${
+                            msg.sender._id === user?._id
+                              ? "bg-slate-500 text-white"
+                              : "bg-gray-200 text-black"
+                          }`}
+                        >
+                          {/* Sender's Name (only displayed if the message is not from the logged-in user) */}
+                          {msg.sender._id !== user?._id && (
+                            <div className="font-semibold">
+                              {msg.sender.firstName} {msg.sender.lastName}
+                            </div>
+                          )}
+
+                          {/* Message Content */}
+                          <div>{msg.content}</div>
+
+                          {/* Timestamp */}
+                          <div className="text-xs text-white ml-8 mt-2 select-none">
+                            {msg.createdAt ? format(new Date(msg.createdAt), "hh:mm a") : "Unknown Time"}
+                          </div>
                         </div>
-                      )}
+                      </ContextMenuTrigger>
 
-                      {/* Message Content: Plain Text Only */}
-                      <div>
-                        <ContextMenu>
-                          <ContextMenuTrigger>{msg.content}</ContextMenuTrigger>
-                          <ContextMenuPortal>
-                            <ContextMenuContent className="p-2 bg-white shadow-md rounded-md">
-                              <ContextMenuItem
-                                onClick={() => handleCopyMessage(msg.content)} // Copy Message on Click
-                                className="cursor-pointer hover:bg-gray-100 p-2"
-                              >
-                                Copy
-                              </ContextMenuItem>
-                            </ContextMenuContent>
-                          </ContextMenuPortal>
-                        </ContextMenu>
-                      </div>
-
-                      {/* Timestamp (At the end) */}
-                      <div className="text-xs text-white ml-8 mt-2 select-none">
-                        {msg.createdAt
-                          ? format(new Date(msg.createdAt), "hh:mm a")
-                          : "Unknown Time"}
-                      </div>
-                    </div>
+                      {/* Context Menu (appears on right-click) */}
+                      <ContextMenuPortal>
+                        <ContextMenuContent className="p-2 bg-white shadow-md rounded-md">
+                          <ContextMenuItem
+                            onClick={() => handleCopyMessage(msg.content)} // Copy only the message content
+                            className="cursor-pointer hover:bg-gray-100 p-2"
+                          >
+                            Copy Message
+                          </ContextMenuItem>
+                        </ContextMenuContent>
+                      </ContextMenuPortal>
+                    </ContextMenu>
                   </div>
                 );
               })}
