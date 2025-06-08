@@ -21,6 +21,7 @@ import {
 interface RightPanelProps {
   setSelectedChatId: (chatId: string | null) => void;
   selectedChatId: string | null;
+  socket: any;
 }
 
 interface User {
@@ -43,17 +44,20 @@ interface Message {
 }
 
 const RightPanel: React.FC<RightPanelProps> = ({
+  socket,
   setSelectedChatId,
   selectedChatId,
 }) => {
   const navigate = useNavigate();
-
   const user = useSelector((state: RootState) => state.user.user);
   const { chatList, setChatList } = useChat();
   const [message, setMessage] = useState<string>("");
   const [messages, setMessages] = useState<Message[]>([]);
   const chat = chatList.find((chat) => chat._id === selectedChatId);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const lastMessageRef = useRef<HTMLDivElement | null>(null);
+  const messageEndRef = useRef<HTMLDivElement | null>(null);
+  const selectedChat = chatList[0];
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -86,29 +90,45 @@ const RightPanel: React.FC<RightPanelProps> = ({
         console.log(error);
       }
     };
-    getChatDetails();
-  }, [selectedChatId, setChatList]);
-
-  useEffect(() => {
-    if (!selectedChatId) return;
 
     const getChatMessages = async () => {
       try {
         const response = await getAllMessages(selectedChatId);
         if (response.data) {
-          console.log(response.data);
           setMessages(response.data);
         }
       } catch (error) {
         console.log(error);
       }
     };
-    getChatMessages();
-  }, [selectedChatId]);
 
-  const otherUser = chat?.users.find(
-    (user: User) => user._id !== chat?.users[0]._id
-  );
+    if (socket) {
+      socket.emit("join chat", selectedChatId);
+    }
+
+    getChatDetails();
+    getChatMessages();
+
+    socket.on("message received", (newMessage: any) => {
+      if (!selectedChat || selectedChat._id !== newMessage.chat._id) {
+        return;
+      }
+
+      setMessages((prevMessages) => [...prevMessages, newMessage]);
+    });
+
+    return () => {
+      socket.off("message received");
+    };
+  }, [selectedChatId, socket, setChatList]);
+
+  const otherUser = chat?.users.find((u: User) => u._id !== user?._id);
+
+  const chatHeaderName = chat?.isGroupChat
+    ? chat.chatName
+    : otherUser
+    ? `${otherUser.firstName} ${otherUser.lastName}`
+    : "Loading...";
 
   const handleSendMessage = async () => {
     const msgData = {
@@ -117,8 +137,27 @@ const RightPanel: React.FC<RightPanelProps> = ({
     };
 
     try {
+     
+      const newMessage: Message = {
+        _id: Date.now().toString(), 
+        sender: {
+          _id: user?._id || "",
+          firstName: user?.firstName || "",
+          lastName: user?.lastName || "",
+        },
+        content: message,
+        createdAt: new Date().toISOString(),
+        chat: selectedChatId || "",
+      };
+
+      setMessages((prevMessages) => [...prevMessages, newMessage]); 
+
       const response = await sendMessage(msgData);
-      if (response.data) setMessage("");
+      if (response.data) {
+        setMessage(""); 
+
+        socket.emit("newMessage", response.data);
+      }
     } catch (error) {
       console.log(error);
     }
@@ -134,6 +173,19 @@ const RightPanel: React.FC<RightPanelProps> = ({
         console.log(error);
       });
   };
+
+  useEffect(() => {
+    if (lastMessageRef.current) {
+      lastMessageRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    if (messageEndRef.current) {
+      messageEndRef.current.scrollIntoView({ behavior: "auto" });
+    }
+  }, [selectedChatId]);
+
   return (
     <div className="p-4 h-full flex flex-col">
       {chat ? (
@@ -163,11 +215,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
                   }
                 }}
               >
-                {chat.isGroupChat
-                  ? chat.chatName
-                  : otherUser
-                  ? `${otherUser.firstName} ${otherUser.lastName}`
-                  : "Loading..."}
+                {chatHeaderName}
               </h2>
             </div>
 
@@ -180,13 +228,18 @@ const RightPanel: React.FC<RightPanelProps> = ({
           </div>
 
           {/* Messages Scrollable Area */}
-         <div className="flex-grow overflow-y-auto px-6 py-4 bg-gray-50 dark:bg-gray-700">
+          <div className="flex-grow overflow-y-auto px-6 py-4 bg-gray-50 dark:bg-gray-700">
             <div className="flex flex-col space-y-4">
               {messages.map((msg, index) => {
                 return (
                   <div
                     key={index}
-                    className={`flex ${msg.sender._id === user?._id ? "justify-end" : "justify-start"}`}
+                    ref={index === messages.length - 1 ? lastMessageRef : null}
+                    className={`flex ${
+                      msg.sender._id === user?._id
+                        ? "justify-end"
+                        : "justify-start"
+                    }`}
                   >
                     {/* Entire message container */}
                     <ContextMenu>
@@ -198,29 +251,33 @@ const RightPanel: React.FC<RightPanelProps> = ({
                               : "bg-gray-200 text-black"
                           }`}
                         >
-                          {/* Sender's Name (only displayed if the message is not from the logged-in user) */}
                           {msg.sender._id !== user?._id && (
-                            <div className="font-semibold">
+                            <div className="font-semibold select-none text-xs">
                               {msg.sender.firstName} {msg.sender.lastName}
                             </div>
                           )}
 
-                          {/* Message Content */}
-                          <div>{msg.content}</div>
+                          <div className='text-md'>{msg.content}</div>
 
-                          {/* Timestamp */}
-                          <div className="text-xs text-white ml-8 mt-2 select-none">
-                            {msg.createdAt ? format(new Date(msg.createdAt), "hh:mm a") : "Unknown Time"}
+                          <div
+                            className={`text-xs ml-8 mt-2 select-none ${
+                              msg.sender._id === user?._id
+                                ? "text-white"
+                                : "text-gray-500 dark:text-gray-700"
+                            } mt-auto text-right`}
+                          >
+                            {msg.createdAt
+                              ? format(new Date(msg.createdAt), "hh:mm a")
+                              : "Unknown Time"}
                           </div>
                         </div>
                       </ContextMenuTrigger>
 
-                      {/* Context Menu (appears on right-click) */}
                       <ContextMenuPortal>
                         <ContextMenuContent className="p-2 bg-white shadow-md rounded-md">
                           <ContextMenuItem
-                            onClick={() => handleCopyMessage(msg.content)} // Copy only the message content
-                            className="cursor-pointer hover:bg-gray-100 p-2"
+                            onClick={() => handleCopyMessage(msg.content)}
+                            className="cursor-pointer hover:bg-gray-100 p-2 dark:text-black"
                           >
                             Copy Message
                           </ContextMenuItem>
@@ -231,6 +288,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
                 );
               })}
             </div>
+            <div ref={messageEndRef} />
           </div>
 
           {/* Input Bar */}

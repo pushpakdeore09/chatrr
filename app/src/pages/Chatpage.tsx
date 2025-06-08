@@ -1,19 +1,20 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SplitPane from "split-pane-react";
 import "split-pane-react/esm/themes/default.css";
 import { useTheme } from "@/components/theme-provider";
 import LeftPanel from "@/components/common/LeftPanel";
 import RightPanel from "@/components/common/RightPanel";
 import NavBar from "@/components/common/NavBar";
-
-
+import { io } from "socket.io-client";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store/store";
 
 const Chatpage = () => {
   const theme = useTheme();
+  const user = useSelector((state: RootState) => state.user.user);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
-
+  const [socketConnected, setSocketConnected] = useState<boolean>(false);
   const [sizes, setSizes] = useState([450, "auto"]);
-  
 
   const minWidth = 200;
   const maxWidth = 500;
@@ -26,6 +27,13 @@ const Chatpage = () => {
 
     setSizes([newLeftPanelSize, newSizes[1]]);
   };
+  const socket = io("http://localhost:3000");
+  useEffect(() => {
+    socket.emit("setup", user);
+    socket.on("connection", () => {
+      setSocketConnected(true);
+    });
+  });
 
   return (
     <div
@@ -49,6 +57,7 @@ const Chatpage = () => {
           />
           {selectedChatId ? (
             <RightPanel
+              socket={socket}
               setSelectedChatId={setSelectedChatId}
               selectedChatId={selectedChatId}
             />
