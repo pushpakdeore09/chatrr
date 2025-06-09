@@ -3,6 +3,7 @@ import "dotenv/config";
 import { connect } from "./db/db.js";
 import userRoutes from "./routes/user.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
+import profileRoutes from "./routes/profile.routes.js";
 import messageRoutes from "./routes/message.routes.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -28,12 +29,12 @@ const PORT = process.env.PORT || 3000;
 app.use("/api/auth", userRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/message", messageRoutes);
+app.use("/api/profile", profileRoutes);
 
 const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
-// Initialize Socket.IO with ES module import
 const io = new SocketIOServer(server, {
   pingTimeout: 60000,
   cors: {
@@ -42,16 +43,27 @@ const io = new SocketIOServer(server, {
 });
 
 io.on("connection", (socket) => {
-  console.log("connected to socket.io");
-
   socket.on("setup", (userData) => {
     socket.join(userData._id);
-    socket.emit("connected");
+    console.log(userData._id);
+    
   });
 
   socket.on("join chat", (room) => {
     socket.join(room);
-    console.log("User joined room: ", room);
+    console.log('User connected:', room);
+    
+  });
+
+  socket.on("typing", (room) => {
+    socket.in(room).emit("typing")
+    console.log('typing');
+    
+  });
+  socket.on("stop typing", (room) => {
+    socket.in(room).emit("stop typing")
+    console.log('stop typing');
+    
   });
 
   socket.on("newMessage", (newMessage) => {

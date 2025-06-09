@@ -9,6 +9,7 @@ import { io } from "socket.io-client";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store/store";
 
+
 const Chatpage = () => {
   const theme = useTheme();
   const user = useSelector((state: RootState) => state.user.user);
@@ -27,12 +28,13 @@ const Chatpage = () => {
 
     setSizes([newLeftPanelSize, newSizes[1]]);
   };
-  const socket = io("http://localhost:3000");
+  const socket = io('http://localhost:3000');
   useEffect(() => {
     socket.emit("setup", user);
     socket.on("connection", () => {
       setSocketConnected(true);
     });
+    
   });
 
   return (
@@ -58,6 +60,7 @@ const Chatpage = () => {
           {selectedChatId ? (
             <RightPanel
               socket={socket}
+              socketConnected={socketConnected}
               setSelectedChatId={setSelectedChatId}
               selectedChatId={selectedChatId}
             />

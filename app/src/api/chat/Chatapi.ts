@@ -41,7 +41,6 @@ export const getChat = async (chatId: string) => {
         },
       }
     );
-    console.log(response);
 
     return response;
   } catch (error) {

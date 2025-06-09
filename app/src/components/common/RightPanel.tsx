@@ -21,6 +21,7 @@ import {
 interface RightPanelProps {
   setSelectedChatId: (chatId: string | null) => void;
   selectedChatId: string | null;
+  socketConnected: any;
   socket: any;
 }
 
@@ -45,6 +46,7 @@ interface Message {
 
 const RightPanel: React.FC<RightPanelProps> = ({
   socket,
+  socketConnected,
   setSelectedChatId,
   selectedChatId,
 }) => {
@@ -53,6 +55,8 @@ const RightPanel: React.FC<RightPanelProps> = ({
   const { chatList, setChatList } = useChat();
   const [message, setMessage] = useState<string>("");
   const [messages, setMessages] = useState<Message[]>([]);
+  const [typing, setTyping] = useState<boolean>(false);
+  const [isTyping, setIstyping] = useState<boolean>(false);
   const chat = chatList.find((chat) => chat._id === selectedChatId);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const lastMessageRef = useRef<HTMLDivElement | null>(null);
@@ -113,12 +117,23 @@ const RightPanel: React.FC<RightPanelProps> = ({
       if (!selectedChat || selectedChat._id !== newMessage.chat._id) {
         return;
       }
-
       setMessages((prevMessages) => [...prevMessages, newMessage]);
+    });
+
+    socket.on("typing", () => {
+      console.log("User is typing...");
+      setIstyping(true);
+    });
+
+    socket.on("stop typing", () => {
+      console.log("User stopped typing...");
+      setIstyping(false);
     });
 
     return () => {
       socket.off("message received");
+      socket.off("typing");
+      socket.off("stop typing");
     };
   }, [selectedChatId, socket, setChatList]);
 
@@ -135,11 +150,10 @@ const RightPanel: React.FC<RightPanelProps> = ({
       content: message,
       chatId: selectedChatId,
     };
-
+    socket.emit("stop typing", selectedChatId);
     try {
-     
       const newMessage: Message = {
-        _id: Date.now().toString(), 
+        _id: Date.now().toString(),
         sender: {
           _id: user?._id || "",
           firstName: user?.firstName || "",
@@ -150,11 +164,11 @@ const RightPanel: React.FC<RightPanelProps> = ({
         chat: selectedChatId || "",
       };
 
-      setMessages((prevMessages) => [...prevMessages, newMessage]); 
+      setMessages((prevMessages) => [...prevMessages, newMessage]);
 
       const response = await sendMessage(msgData);
       if (response.data) {
-        setMessage(""); 
+        setMessage("");
 
         socket.emit("newMessage", response.data);
       }
@@ -185,6 +199,27 @@ const RightPanel: React.FC<RightPanelProps> = ({
       messageEndRef.current.scrollIntoView({ behavior: "auto" });
     }
   }, [selectedChatId]);
+
+  const typeHandler = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMessage(e.target.value);
+    if (!socketConnected) return;
+
+    if (!typing) {
+      setTyping(true);
+      socket.emit("typing", selectedChatId);
+    }
+    let lastTypingTime = new Date().getTime();
+    var timer = 3000;
+    setTimeout(() => {
+      var currTime = new Date().getTime();
+      var timeDiff = currTime - lastTypingTime;
+
+      if (timeDiff >= timer && typing) {
+        socket.emit("stop typing", selectedChatId);
+        setTyping(false);
+      }
+    }, timer);
+  };
 
   return (
     <div className="p-4 h-full flex flex-col">
@@ -257,7 +292,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
                             </div>
                           )}
 
-                          <div className='text-md'>{msg.content}</div>
+                          <div className="text-md">{msg.content}</div>
 
                           <div
                             className={`text-xs ml-8 mt-2 select-none ${
@@ -291,12 +326,18 @@ const RightPanel: React.FC<RightPanelProps> = ({
             <div ref={messageEndRef} />
           </div>
 
+          {isTyping ? (
+            <div className="bg-gray-500 text-sm text-gray-500 dark:text-white ml-6">
+              typing...
+            </div>
+          ) : null}
+
           {/* Input Bar */}
           <div className="border-t px-6 py-4 bg-white dark:bg-gray-800 flex items-center gap-3 dark:border-gray-700">
             <Textarea
               ref={textareaRef}
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={typeHandler}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
