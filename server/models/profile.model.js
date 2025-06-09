@@ -7,7 +7,7 @@ const profileSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
-
+  bio: String,
   profilePicture: String,
   phoneNumber: {
     type: String,

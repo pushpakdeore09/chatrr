@@ -7,8 +7,6 @@ import profileRoutes from "./routes/profile.routes.js";
 import messageRoutes from "./routes/message.routes.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-
-// Use ES module import for socket.io
 import { Server as SocketIOServer } from "socket.io";
 
 const app = express();

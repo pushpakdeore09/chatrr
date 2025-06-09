@@ -10,7 +10,7 @@ export const createProfileController = async (req, res) => {
   }
 
   try {
-    const { userId, profilePicture, phoneNumber, dob, gender } = req.body;
+    const { userId, bio, profilePicture, phoneNumber, dob, gender } = req.body;
 
     const existingUser = await User.findOne({ userId });
 
@@ -20,6 +20,7 @@ export const createProfileController = async (req, res) => {
 
     const userProfile = await Profile.create({
       profileId: userId,
+      bio,
       profilePicture,
       phoneNumber,
       dob,

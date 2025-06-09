@@ -28,7 +28,7 @@ const NavBar = () => {
       const response = await logout();
       if (response.data) {
         toast.success(response.data);
-        
+
         dispatch(setUser(null));
         localStorage.removeItem("user");
         localStorage.removeItem("token");
@@ -82,11 +82,14 @@ const NavBar = () => {
         <ModeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <FaEllipsisV
-              className="w-5 h-5 cursor-pointer hover:opacity-80 transition-opacity text-black dark:text-white"
+            <span
+              className="cursor-pointer hover:opacity-80 transition-opacity text-black dark:text-white"
               title="Menu"
-            />
+            >
+              <FaEllipsisV className="w-5 h-5" />
+            </span>
           </DropdownMenuTrigger>
+
           <DropdownMenuContent
             className={`w-40 ${
               theme.theme === "light" ? "bg-white" : "bg-gray-700 text-white"
