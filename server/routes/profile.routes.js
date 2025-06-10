@@ -10,4 +10,10 @@ router.post(
   profileController.createProfileController
 );
 
+router.get(
+  "/v1/get-profile",
+  authMiddleware.authUser,
+  profileController.getProfileController
+);
+
 export default router;

@@ -7,6 +7,27 @@ const profileSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
+  firstName: {
+    type: String,
+    required: true,
+    lowercase: true,
+    minLength: [4, "Username must be at least 4 characters long"],
+    maxLength: [50, "Username must not be longer than 50 characters"],
+  },
+  lastName: {
+    type: String,
+    required: true,
+    lowercase: true,
+    minLength: [4, "Username must be at least 4 characters long"],
+    maxLength: [50, "Username must not be longer than 50 characters"],
+  },
+  email: {
+    type: String,
+    required: true,
+    lowercase: true,
+    minLength: [4, "Username must be at least 4 characters long"],
+    maxLength: [50, "Username must not be longer than 50 characters"],
+  },
   bio: String,
   profilePicture: String,
   phoneNumber: {

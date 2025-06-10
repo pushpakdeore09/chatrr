@@ -2,6 +2,7 @@ import userSchema from "../models/user.model.js";
 import * as userService from "../services/user.service.js";
 import { validationResult } from "express-validator";
 import redisClient from "../services/redis.service.js";
+import * as profileService from "../service/profile.service.js";
 
 export const registerController = async (req, res) => {
   const errors = validationResult(req);
@@ -13,8 +14,11 @@ export const registerController = async (req, res) => {
   try {
     const user = await userService.createUser(req);
     const token = user.generateJwt();
+    const profile = await profileService.createProfile(req);
 
-    res.status(201).send({ user, token });
+    if (profile) {
+      res.status(201).send({ user, token });
+    }
   } catch (error) {
     res.status(400).send(error.message);
   }
@@ -132,7 +136,6 @@ export const logoutController = async (req, res) => {
 
 export const getUserSearchController = async (req, res) => {
   const keyword = req.query.search
-  
     ? {
         $or: [
           { firstName: { $regex: req.query.search, $options: "i" } },
@@ -148,11 +151,10 @@ export const getUserSearchController = async (req, res) => {
         _id: { $ne: req.user._id },
       })
       .select("_id firstName lastName email");
-      
+
     res.status(200).json(users);
   } catch (error) {
     console.error("Search failed:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
-

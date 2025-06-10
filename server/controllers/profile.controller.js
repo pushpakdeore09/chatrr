@@ -32,3 +32,18 @@ export const createProfileController = async (req, res) => {
     return res.status(400).send(error.message);
   }
 };
+
+export const getProfileController = async (req, res) => {
+  const { userId } = req.query;
+
+  try {
+    const profile = await Profile.findById(userId);
+    if (!profile) {
+      return res.status(400).send("User not found");
+    }
+
+    return res.status(200).send(profile);
+  } catch (error) {
+    return res.status(400).send(error.message);
+  }
+};
