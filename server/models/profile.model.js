@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const profileSchema = new mongoose.Schema({
-  profileId: {
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
@@ -37,7 +37,6 @@ const profileSchema = new mongoose.Schema({
   dob: Date,
   gender: {
     type: String,
-    enum: ["Male", "Female", "Other"],
   },
 });
 

@@ -2,7 +2,7 @@ import userSchema from "../models/user.model.js";
 import * as userService from "../services/user.service.js";
 import { validationResult } from "express-validator";
 import redisClient from "../services/redis.service.js";
-import * as profileService from "../service/profile.service.js";
+import * as profileService from "../services/profile.service.js";
 
 export const registerController = async (req, res) => {
   const errors = validationResult(req);
@@ -14,12 +14,14 @@ export const registerController = async (req, res) => {
   try {
     const user = await userService.createUser(req);
     const token = user.generateJwt();
-    const profile = await profileService.createProfile(req);
+    const profile = await profileService.createProfile(req, user._id);
 
     if (profile) {
       res.status(201).send({ user, token });
     }
   } catch (error) {
+    console.log(error.message);
+    
     res.status(400).send(error.message);
   }
 };
