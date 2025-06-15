@@ -111,7 +111,7 @@ const Loginpage = () => {
             </Button>
           </form>
           <div className="flex justify-end mb-4 text-sm mt-2">
-            <a href="#" className="text-blue-500 hover:underline">
+            <a className="text-blue-500 hover:underline cursor-pointer" onClick={() => navigate("/forgot-password")}>
               Forgot Password?
             </a>
           </div>

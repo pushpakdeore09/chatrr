@@ -12,43 +12,37 @@ import Chatpage from "./pages/Chatpage";
 import Profilepage from "./pages/Profilepage";
 import { useSelector } from "react-redux";
 import type { RootState } from "./store/store";
+import ForgotPassword from "./pages/Forgotpassword";
 
 function App() {
   const user = useSelector((state: RootState) => state.user.user);
 
   return (
     <>
-        <Router>
-          <Routes>
-            {/* Public homepage: if logged in redirect to chats */}
-            <Route
-              path="/"
-              element={<Homepage />}
-            />
+      <Router>
+        <Routes>
+          <Route path="/" element={<Homepage />} />
+          <Route path='/forgot-password' element={<ForgotPassword/>}/>
+          <Route
+            path="/chats"
+            element={user ? <Chatpage /> : <Navigate to="/login" replace />}
+          />
+          <Route
+            path="/profile/:_id"
+            element={user ? <Profilepage /> : <Navigate to="/login" replace />}
+          />
 
-            {/* Protected routes */}
-            <Route
-              path="/chats"
-              element={user ? <Chatpage /> : <Navigate to="/login" replace />}
-            />
-            <Route
-              path="/profile/:_id"
-              element={
-                user ? <Profilepage /> : <Navigate to="/login" replace />
-              }
-            />
-
-            <Route
-              path="/login"
-              element={user ? <Navigate to="/chats" replace /> : <Loginpage />}
-            />
-            <Route
-              path="/signup"
-              element={user ? <Navigate to="/chats" replace /> : <Signuppage />}
-            />
-          </Routes>
-        </Router>
-        
+          <Route
+            path="/login"
+            element={user ? <Navigate to="/chats" replace /> : <Loginpage />}
+          />
+          <Route
+            path="/signup"
+            element={user ? <Navigate to="/chats" replace /> : <Signuppage />}
+          />
+          
+        </Routes>
+      </Router>
     </>
   );
 }
