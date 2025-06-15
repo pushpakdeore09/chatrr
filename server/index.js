@@ -44,24 +44,25 @@ io.on("connection", (socket) => {
   socket.on("setup", (userData) => {
     socket.join(userData._id);
     console.log(userData._id);
-    
   });
 
   socket.on("join chat", (room) => {
     socket.join(room);
-    console.log('User connected:', room);
-    
+    console.log("User connected:", room);
   });
 
   socket.on("typing", (room) => {
-    socket.in(room).emit("typing")
-    console.log('typing');
-    
+    if (socket.rooms.has(room)) {
+      socket.to(room).emit("typing");
+      console.log("User is typing in room: " + room);
+    }
   });
+
   socket.on("stop typing", (room) => {
-    socket.in(room).emit("stop typing")
-    console.log('stop typing');
-    
+    if (socket.rooms.has(room)) {
+      socket.to(room).emit("stop typing");
+      console.log("User stopped typing in room: " + room);
+    }
   });
 
   socket.on("newMessage", (newMessage) => {
@@ -76,3 +77,4 @@ io.on("connection", (socket) => {
     });
   });
 });
+

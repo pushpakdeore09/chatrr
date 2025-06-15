@@ -3,7 +3,6 @@ import User from "../models/user.model.js";
 import Profile from "../models/profile.model.js";
 
 export const createProfileController = async (req, res) => {
-  const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });

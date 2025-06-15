@@ -52,7 +52,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
 }) => {
   const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.user.user);
-  const { chatList, setChatList } = useChat();
+  const { chatList, setChatList, notification, setNotification } = useChat();
   const [message, setMessage] = useState<string>("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [typing, setTyping] = useState<boolean>(false);
@@ -115,18 +115,23 @@ const RightPanel: React.FC<RightPanelProps> = ({
 
     socket.on("message received", (newMessage: any) => {
       if (!selectedChat || selectedChat._id !== newMessage.chat._id) {
-        return;
+        setNotification((prevNotifications: any) => {
+          if (
+            !prevNotifications.some((msg: any) => msg._id === newMessage._id)
+          ) {
+            return [newMessage, ...prevNotifications];
+          }
+          return prevNotifications;
+        });
       }
       setMessages((prevMessages) => [...prevMessages, newMessage]);
     });
 
     socket.on("typing", () => {
-      console.log("User is typing...");
       setIstyping(true);
     });
 
     socket.on("stop typing", () => {
-      console.log("User stopped typing...");
       setIstyping(false);
     });
 

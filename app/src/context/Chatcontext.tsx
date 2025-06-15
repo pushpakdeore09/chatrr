@@ -18,6 +18,8 @@ interface Chat {
 interface ChatContextProps {
   chatList: Chat[];
   setChatList: React.Dispatch<React.SetStateAction<Chat[]>>;
+  notification: any,
+  setNotification: any
 }
 
 const ChatContext = createContext<ChatContextProps | undefined>(undefined);
@@ -34,10 +36,11 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [chatList, setChatList] = useState<Chat[]>([]);
+  const [notification, setNotification] = useState([]);
 
   return (
     <ChatContext.Provider
-      value={{ chatList, setChatList }}
+      value={{ chatList, setChatList, notification, setNotification }}
     >{children}</ChatContext.Provider>
   );
 };

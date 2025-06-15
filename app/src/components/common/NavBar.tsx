@@ -1,4 +1,4 @@
-import { FaEllipsisV } from "react-icons/fa";
+import { FaBell, FaEllipsisV } from "react-icons/fa";
 import { useTheme } from "../theme-provider";
 import NewGroupModal from "./NewGroupModal";
 import { ModeToggle } from "../mode-toggle";
@@ -60,7 +60,13 @@ const NavBar = () => {
       </div>
       <div className="flex items-center space-x-4 gap-2">
         <NewGroupModal />
-
+        <span
+          className="cursor-pointer hover:opacity-80 transition-opacity text-black dark:text-white"
+          title="Notifications"
+          onClick={() => console.log("Notification clicked")} // Handle notifications
+        >
+          <FaBell className="w-5 h-5" />
+        </span>
         <Avatar
           className="w-10 h-10 cursor-pointer text-black hover:opacity-80 transition-opacity dark:text-white"
           title="Profile"

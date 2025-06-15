@@ -34,9 +34,9 @@ const Loginpage = () => {
         toast.success("Login Success!");
         navigate("/chats");
       }
-    } catch (error) {
-      console.log(error);
-      toast.error("Some error occured!");
+    } catch (error: any) {
+      
+      toast.error(error.response.data);
     }
   };
 

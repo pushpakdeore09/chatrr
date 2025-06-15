@@ -1,11 +1,16 @@
 import mongoose from "mongoose";
 
 const profileSchema = new mongoose.Schema({
+  profileId: {
+    type: mongoose.Schema.Types.ObjectId,
+    default: function() {
+      return this._id; 
+    },
+  },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
-    unique: true,
   },
   firstName: {
     type: String,
