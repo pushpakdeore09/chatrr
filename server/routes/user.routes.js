@@ -11,9 +11,9 @@ router.get(
   authMiddleware.authUser,
   userController.getUserSearchController
 );
-router.post("/v1/reset-password", userController.resetPasswordController);
+router.post("/v1/send-otp", userController.sendOTPController);
 router.post("/v1/verify-otp", userController.verifyOtpController);
-router.post("/v1/update-password", userController.updatePasswordController);
+router.post("/v1/update-password", userController.forgotPasswordController);
 router.post(
   "/v1/logout",
   authMiddleware.authUser,

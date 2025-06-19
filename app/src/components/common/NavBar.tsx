@@ -63,9 +63,8 @@ const NavBar = () => {
         <span
           className="cursor-pointer hover:opacity-80 transition-opacity text-black dark:text-white"
           title="Notifications"
-          onClick={() => console.log("Notification clicked")} // Handle notifications
+          onClick={() => console.log("Notification clicked")}
         >
-          <FaBell className="w-5 h-5" />
         </span>
         <Avatar
           className="w-10 h-10 cursor-pointer text-black hover:opacity-80 transition-opacity dark:text-white"

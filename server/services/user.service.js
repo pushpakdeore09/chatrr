@@ -34,11 +34,11 @@ export function generateOtp() {
 }
 
 export async function sendResetPasswordEmail(email, otp) {
-  console.log(`Sending OTP ${otp} to ${email}`);
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
       user: "pushpak.deore04@gmail.com",
+      pass: "wiepplpkhwvsfevo"
     },
   });
 

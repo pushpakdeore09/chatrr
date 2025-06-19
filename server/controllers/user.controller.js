@@ -3,6 +3,7 @@ import * as userService from "../services/user.service.js";
 import { validationResult } from "express-validator";
 import redisClient from "../services/redis.service.js";
 import * as profileService from "../services/profile.service.js";
+import bcrypt from "bcrypt";
 
 export const registerController = async (req, res) => {
   const errors = validationResult(req);
@@ -51,7 +52,7 @@ export const loginController = async (req, res) => {
   }
 };
 
-export const resetPasswordController = async (req, res) => {
+export const sendOTPController = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -96,25 +97,25 @@ export const verifyOtpController = async (req, res) => {
     if (user.resetOtpExpireAt < Date.now()) {
       return res.status(400).json({ errors: "OTP expired" });
     }
-    res.status(200).json({ message: "OTP verified" });
+    res.status(200).json({ message: "OTP Verified Successfully!" });
   } catch (error) {
     res.status(400).send(error.message);
   }
 };
 
-export const updatePasswordController = async (req, res) => {
+export const forgotPasswordController = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
 
   try {
-    const { email, password } = req.body;
+    const { email, newPassword } = req.body;
     const user = await userSchema.findOne({ email });
     if (!user) {
       return res.status(400).json({ errors: "User not found" });
     }
-    const hashedPassword = await userService.hashPassword(password);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
     user.resetOtp = null;
     user.resetOtpExpireAt = null;

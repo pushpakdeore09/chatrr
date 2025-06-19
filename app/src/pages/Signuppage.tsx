@@ -2,6 +2,7 @@ import { register } from "@/api/auth/Authapi";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { HiLockClosed, HiOutlineMail, HiUser } from "react-icons/hi";
@@ -15,6 +16,7 @@ const Signuppage = () => {
   const [lastName, setLastName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSignup = async () => {
     console.log("processing signup");
@@ -120,13 +122,24 @@ const Signuppage = () => {
               </label>
               <div className="relative mt-2">
                 <Input
-                  type="password"
+                  type={showPassword? 'text' : 'password'}
                   id="password"
                   placeholder="Enter your password"
                   className="p-3 pl-10 border rounded-xl w-full focus:ring-2 focus:ring-blue-500"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-white"
+                >
+                  {showPassword ? (
+                    <Eye className="w-5 h-5" />
+                  ) : (
+                    <EyeOff className="w-5 h-5" />
+                  )}
+                </button>
                 <HiLockClosed className="absolute left-3 top-3 text-gray-400" />
               </div>
             </div>

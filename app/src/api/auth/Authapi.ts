@@ -31,3 +31,33 @@ export const logout = async () => {
     throw error;
   }
 }
+
+export const sendOTP = async (email: string) => {
+  try {
+    const response = await apiClient.post('auth/v1/send-otp', {email});
+    return response;
+    
+  } catch (error) {
+    throw error;
+  }
+}
+
+export const verifyOTP = async (data: object) => {
+  try {
+    const response = await apiClient.post("/auth/v1/verify-otp", data);
+    console.log(response);
+    return response;
+  } catch (error) {
+    throw error
+  }
+}
+
+export const updatePassword = async (data: object) => {
+  try {
+    const response = await apiClient.post("/auth/v1/update-password", data);
+    console.log(response);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}
