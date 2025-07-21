@@ -10,7 +10,6 @@ export const getUserProfile = async (userId: string) => {
         },
       }
     );
-    console.log(response);
     return response;
   } catch (error) {
     throw error;

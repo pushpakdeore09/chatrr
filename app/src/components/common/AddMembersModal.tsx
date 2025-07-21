@@ -5,17 +5,17 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { HiUserGroup } from "react-icons/hi";
-import { Input } from "../ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { searchUser } from "@/api/auth/Searchapi";
-import toast from "react-hot-toast";
-import { createGroupChat } from "@/api/chat/Chatapi";
+import { addToGroup } from "@/api/chat/Chatapi";
 import { useChat } from "@/context/Chatcontext";
+import toast from "react-hot-toast";
+
+
 
 interface User {
   _id: string;
@@ -25,21 +25,24 @@ interface User {
   avatarUrl?: string;
 }
 
-interface Chat {
+interface Group {
   _id: string;
   chatName: string;
-  latestMessage: string;
   users: User[];
-  isGroupChat: boolean;
+  groupAdmin: string;
+  createdAt: string;
+} 
+interface AddMembersModalProps {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  onGroupUpdated: (updatedChat: Group) => void;
 }
 
-const NewGroupModal = () => {
-  const [open, setOpen] = useState(false);
-  const { setChatList } = useChat();
-  const [groupName, setGroupName] = useState("");
+const AddMembersModal = ({ open, setOpen, onGroupUpdated }: AddMembersModalProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
+  const { currentChatId } = useChat();
 
   useEffect(() => {
     if (!searchTerm.trim()) {
@@ -71,83 +74,33 @@ const NewGroupModal = () => {
     setSelectedUsers((prev) => prev.filter((user) => user._id !== userId));
   };
 
-  const resetAll = () => {
-    setGroupName("");
-    setSearchTerm("");
-    setSearchResults([]);
-    setSelectedUsers([]);
-  };
-
-  const handleOpenChange = (isOpen: boolean) => {
-    setOpen(isOpen);
-    if (!isOpen) {
-      resetAll();
+  const handleAddMembers = async () => {
+    const userIds = selectedUsers.map((user)=> user._id)
+    console.log(currentChatId);
+    const membersToAdd = {
+        chatId: currentChatId,
+        userIds: userIds
     }
-  };
-
-  const handleCreateGroup = async () => {
-    if (selectedUsers.length <= 1) {
-      toast.error("Please select at least two friends to create a group.");
-      return;
-    }
-
-    const groupInfo = {
-      chatName: groupName,
-      users: selectedUsers,
-    };
-
     try {
-      const response = await createGroupChat(groupInfo);
-      const newGroup = response.data;
-
-      setChatList((prevChats: Chat[]) => {
-        if (!prevChats.find((chat) => chat._id === newGroup._id)) {
-          return [newGroup, ...prevChats];
+        const response = await addToGroup(membersToAdd);
+        if(response.data){
+            toast.success(response.data.message);
+            //onGroupUpdated(updatedChat);
+            setOpen(false);
         }
-        return prevChats;
-      });
-
-      setOpen(false);
-      resetAll();
-
-      toast.success("Group created successfully!");
     } catch (error) {
-      console.error("Error creating group:", error);
-      toast.error("There was an error creating the group.");
+        console.log(error);
     }
-  };
+  }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button
-          variant="default"
-          className="flex items-center gap-2 cursor-pointer"
-          title="Create New Group"
-          onClick={() => setOpen(true)}
-        >
-          <HiUserGroup className="w-5 h-5" />
-          <span className="select-none">New Group +</span>
-        </Button>
-      </DialogTrigger>
-
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-md dark:bg-gray-800">
         <DialogHeader>
-          <DialogTitle>Create New Group</DialogTitle>
-          <DialogDescription>
-            Enter group details below to create a new chat group.
-          </DialogDescription>
+          <DialogTitle>Select Friends</DialogTitle>
+          <DialogDescription>Search and select friends for your group</DialogDescription>
         </DialogHeader>
 
-        <Input
-          type="text"
-          placeholder="Group Name"
-          value={groupName}
-          onChange={(e) => setGroupName(e.target.value)}
-          className="w-full rounded border border-slate-600 dark:border-gray-300 py-2 mt-4"
-        />
-
-        {/* Search Input */}
         <div className="relative mt-4">
           <Input
             type="text"
@@ -156,7 +109,6 @@ const NewGroupModal = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full rounded border border-slate-600 py-2 dark:border-gray-300"
           />
-          {/* Search results dropdown */}
           {searchResults.length > 0 && (
             <div className="absolute z-50 top-full left-0 right-0 max-h-60 overflow-y-auto rounded-md border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 shadow-lg mt-1">
               {searchResults.map((user) => (
@@ -188,8 +140,6 @@ const NewGroupModal = () => {
           )}
         </div>
 
-        {/* Selected Users Avatars */}
-
         {selectedUsers.length > 0 && (
           <div className="flex flex-wrap gap-4 mt-3">
             {selectedUsers.map((user) => (
@@ -207,7 +157,6 @@ const NewGroupModal = () => {
                     </AvatarFallback>
                   )}
                 </Avatar>
-                {/* Remove button */}
                 <button
                   onClick={() => removeUser(user._id)}
                   className="absolute -top-1 -right-1 rounded-full bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center hover:bg-red-600 focus:outline-none select-none"
@@ -226,20 +175,15 @@ const NewGroupModal = () => {
 
         <div className="mt-6 flex justify-end gap-2">
           <DialogClose asChild>
-            <Button variant="outline" className="cursor-pointer select-none">
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => {
+                setSelectedUsers([]);
+            }}>Cancel</Button>
           </DialogClose>
           <Button
-            className="cursor-pointer select-none"
-            onClick={() => {
-              handleCreateGroup();
-              setOpen(false);
-              resetAll();
-            }}
-            disabled={!groupName || selectedUsers.length === 0}
+            onClick={handleAddMembers}
+            disabled={selectedUsers.length === 0}
           >
-            Create
+            Add
           </Button>
         </div>
       </DialogContent>
@@ -247,4 +191,4 @@ const NewGroupModal = () => {
   );
 };
 
-export default NewGroupModal;
+export default AddMembersModal;

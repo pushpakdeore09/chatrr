@@ -64,8 +64,7 @@ const NavBar = () => {
           className="cursor-pointer hover:opacity-80 transition-opacity text-black dark:text-white"
           title="Notifications"
           onClick={() => console.log("Notification clicked")}
-        >
-        </span>
+        ></span>
         <Avatar
           className="w-10 h-10 cursor-pointer text-black hover:opacity-80 transition-opacity dark:text-white"
           title="Profile"
@@ -87,12 +86,15 @@ const NavBar = () => {
         <ModeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <span
-              className="cursor-pointer hover:opacity-80 transition-opacity text-black dark:text-white"
-              title="Menu"
+            <button
+              type="button"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-md hover:bg-muted transition"
+              title="More options"
             >
-              <FaEllipsisV className="w-5 h-5" />
-            </span>
+              <span className="pointer-events-none">
+                <FaEllipsisV className="h-5 w-5" />
+              </span>
+            </button>
           </DropdownMenuTrigger>
 
           <DropdownMenuContent

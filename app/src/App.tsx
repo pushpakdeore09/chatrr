@@ -13,6 +13,7 @@ import Profilepage from "./pages/Profilepage";
 import { useSelector } from "react-redux";
 import type { RootState } from "./store/store";
 import ForgotPassword from "./pages/Forgotpassword";
+import GroupInfopage from "./pages/GroupInfopage";
 
 function App() {
   const user = useSelector((state: RootState) => state.user.user);
@@ -30,6 +31,11 @@ function App() {
           <Route
             path="/profile/:_id"
             element={user ? <Profilepage /> : <Navigate to="/login" replace />}
+          />
+
+          <Route
+            path="/group/:_id"
+            element={user ? <GroupInfopage /> : <Navigate to="/login" replace />}
           />
 
           <Route

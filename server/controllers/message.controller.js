@@ -17,14 +17,6 @@ export const sendMessage = async (req, res) => {
     content: content,
     chat: chatId,
   };
-  
-  if (req.file) {
-    newMessage.file = {
-      url: req.file.path,
-      public_id: req.file.filename,
-      mimetype: req.file.mimetype,
-    };
-  }
   try {
     var message = await Message.create(newMessage);
     message = await message.populate("sender", "firstName lastName email");

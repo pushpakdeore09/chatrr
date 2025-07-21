@@ -27,7 +27,6 @@ const ProfilePage = () => {
   useEffect(() => {
     const getProfile = async () => {
       if (!_id) return;
-
       try {
         const response = await getUserProfile(_id);
         if (response.data) {
@@ -54,7 +53,10 @@ const ProfilePage = () => {
           <CardHeader className="flex flex-col items-center text-center gap-3">
             <Avatar className="h-20 w-20">
               <AvatarImage src={userProfile?.profilePicture} alt="Profile" />
-              <AvatarFallback>U</AvatarFallback>
+              <AvatarFallback>
+                {userProfile?.firstName[0].toUpperCase()}
+                {userProfile?.lastName[0].toUpperCase()}
+              </AvatarFallback>
             </Avatar>
             <CardTitle className="text-xl select-none">
               {userProfile?.firstName} {userProfile?.lastName}

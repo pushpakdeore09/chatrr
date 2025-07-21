@@ -59,9 +59,20 @@ export const createGroupChat = async (groupInfo: object) => {
         },
       }
     );
-    console.log(response);
     return response;
-    
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const addToGroup = async (membersToAdd: object) => {
+  try {
+    const response = await apiClient.put("/chat/v1/add-to-group", membersToAdd, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+    return response;
   } catch (error) {
     throw error;
   }

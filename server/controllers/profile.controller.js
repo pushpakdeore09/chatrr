@@ -34,9 +34,11 @@ export const createProfileController = async (req, res) => {
 
 export const getProfileController = async (req, res) => {
   const { userId } = req.query;
+  
 
   try {
-    const profile = await Profile.findById(userId);
+    const profile = await Profile.findOne({ userId });
+    
     if (!profile) {
       return res.status(400).send("User not found");
     }

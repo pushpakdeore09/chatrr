@@ -15,19 +15,6 @@ export const sendMessage = async (msgData: object) => {
   }
 };
 
-export const sendMessageWithFile = async (formData: FormData) => {
-  try {
-    const response = await apiClient.post("/message/v1/send-message", formData, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-        "Content-Type": "multipart/form-data"
-      }
-    });
-    return response;
-  } catch (error) {
-    throw error;
-  }
-}
 
 export const getAllMessages = async (chatId: string) => {
   try {

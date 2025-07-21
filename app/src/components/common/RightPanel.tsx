@@ -1,6 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { HiPaperAirplane, HiX } from "react-icons/hi";
-import { FiPaperclip } from "react-icons/fi";
 import { Textarea } from "../ui/textarea";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -10,7 +9,6 @@ import {
   getAllMessages,
   sendMessage,
   checkMessage,
-  sendMessageWithFile,
 } from "@/api/message/Messageapi";
 import type { RootState } from "@/store/store";
 import { useSelector } from "react-redux";
@@ -23,7 +21,6 @@ import {
   ContextMenuPortal,
   ContextMenuTrigger,
 } from "../ui/context-menu";
-import { PdfPreview } from "./PdfPreview";
 
 interface RightPanelProps {
   setSelectedChatId: (chatId: string | null) => void;
@@ -49,7 +46,11 @@ interface Message {
   content: string;
   createdAt: string;
   chat: string;
-  file?: string;
+  file?: {
+    url: string;
+    public_id: string;
+    mimetype: string;
+  };
 }
 
 const RightPanel: React.FC<RightPanelProps> = ({
@@ -60,10 +61,8 @@ const RightPanel: React.FC<RightPanelProps> = ({
 }) => {
   const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.user.user);
-  const { chatList, setChatList, setNotification } = useChat();
+  const { chatList, setChatList, setCurrentChatId } = useChat();
   const [message, setMessage] = useState<string>("");
-  const [file, setFile] = useState<File | null>(null);
-  const [filePreview, setFilePreview] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [typing, setTyping] = useState<boolean>(false);
   const [isTyping, setIstyping] = useState<boolean>(false);
@@ -71,15 +70,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const lastMessageRef = useRef<HTMLDivElement | null>(null);
   const messageEndRef = useRef<HTMLDivElement | null>(null);
-  const selectedChat = chatList[0];
 
-  useEffect(() => {
-    return () => {
-      if (filePreview) {
-        URL.revokeObjectURL(filePreview);
-      }
-    };
-  }, [filePreview]);
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -131,19 +122,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
     getChatDetails();
     getChatMessages();
 
-    socket.on("message received", (newMessage: any) => {
-      if (!selectedChat || selectedChat._id !== newMessage.chat._id) {
-        setNotification((prevNotifications: any) => {
-          if (
-            !prevNotifications.some((msg: any) => msg._id === newMessage._id)
-          ) {
-            return [newMessage, ...prevNotifications];
-          }
-          return prevNotifications;
-        });
-      }
-      setMessages((prevMessages) => [...prevMessages, newMessage]);
-    });
+    
 
     socket.on("typing", () => {
       setIstyping(true);
@@ -175,34 +154,38 @@ const RightPanel: React.FC<RightPanelProps> = ({
     console.log(response);
     return response;
   };
+
+  const handleProfileInfoClick = () => {
+    if(chat){
+      setCurrentChatId(chat._id);
+    }
+    if(chat?.isGroupChat){
+      navigate(`/group/${chat._id}`)
+    } else if(otherUser) {
+      navigate(`/profile/${otherUser._id}`)
+    }
+  }
+
   const handleSendMessage = async () => {
     try {
-      if (!file) {
-        const response = await isValidMessage();
-        if (response.data?.toxic) {
-          toast.error(
-            "Message blocked due to inappropriate language. Please edit and try again."
-          );
-          return;
-        }
-      }
+      
+        const validationResponse = await isValidMessage();
+          if (validationResponse.data?.toxic) {
+            toast.error(
+              "Message blocked due to inappropriate language. Please edit and try again."
+            );
+            return;
+          }
+      
 
       socket.emit("stop typing", selectedChatId);
-      let response;
-      if (file) {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("content", message);
-        formData.append("chatId", selectedChatId || "");
-        response = await sendMessageWithFile(formData);
-        console.log(response);
-      } else {
+       
         const msgData = {
           content: message,
           chatId: selectedChatId,
         };
-        response = await sendMessage(msgData);
-      }
+        const response = await sendMessage(msgData);
+      
 
       const newMessage: Message = {
         _id: Date.now().toString(),
@@ -282,9 +265,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
                 <AvatarImage />
                 <AvatarFallback
                   className="flex items-center justify-center w-full h-full text-lg bg-gray-200 dark:bg-white text-gray-800 dark:text-black dark:border-white select-none cursor-pointer rounded-full"
-                  onClick={() =>
-                    otherUser && navigate(`/profile/${otherUser._id}`)
-                  }
+                  onClick={handleProfileInfoClick}
                 >
                   {chat.isGroupChat
                     ? chat.chatName[0]
@@ -294,11 +275,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
 
               <h2
                 className="text-2xl font-bold select-none cursor-pointer"
-                onClick={() => {
-                  if (!chat.isGroupChat && otherUser) {
-                    navigate(`/profile/${otherUser._id}`);
-                  }
-                }}
+                onClick={handleProfileInfoClick}
               >
                 {chatHeaderName}
               </h2>
@@ -341,38 +318,9 @@ const RightPanel: React.FC<RightPanelProps> = ({
                               {msg.sender.firstName} {msg.sender.lastName}
                             </div>
                           )}
-                          {msg.file ? (
-                            <div className="file-preview">
-                              {typeof msg.file === "string" &&
-                              msg.file.endsWith(".pdf") ? (
-                                <PdfPreview fileUrl={msg.file} />
-                              ) : typeof msg.file === "string" &&
-                                msg.file.match(/\.(jpeg|jpg|gif|png|svg)$/i) ? (
-                                <img
-                                  src={msg.file}
-                                  alt="shared file"
-                                  className="max-w-xs rounded"
-                                />
-                              ) : (
-                                <a
-                                  href={
-                                    typeof msg.file === "string"
-                                      ? msg.file
-                                      : "#"
-                                  }
-                                  download
-                                  className="inline-block px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-600 transition-colors duration-200 cursor-pointer"
-                                >
-                                  Download File
-                                </a>
-                              )}
-                              {msg.content && (
-                                <p className="caption">{msg.content}</p>
-                              )}
-                            </div>
-                          ) : (
+                          
                             <div className="text-md">{msg.content}</div>
-                          )}
+                          
 
                           <div
                             className={`text-xs ml-8 mt-2 select-none ${
@@ -412,46 +360,10 @@ const RightPanel: React.FC<RightPanelProps> = ({
             </div>
           ) : null}
 
-          {file && (
-            <div className="px-6 py-2 flex items-center gap-4">
-              <p
-                className="text-gray-800 dark:text-gray-200 text-sm truncate max-w-xs select-none"
-                title={file.name}
-              >
-                {file.name}
-              </p>
-              <HiX
-                onClick={() => {
-                  setFile(null);
-                  setFilePreview(null);
-                }}
-                className="text-sm text-black dark:text-white cursor-pointer"
-                title="Remove file"
-              />
-            </div>
-          )}
+          
 
           {/* Input Bar */}
           <div className="border-t px-6 py-4 bg-white dark:bg-gray-800 flex items-center gap-3 dark:border-gray-700">
-            <input
-              type="file"
-              id="file-upload"
-              accept="image/*,video/*,application/pdf"
-              className="hidden"
-              onChange={(e) => {
-                const selectedFile = e.target.files?.[0];
-                if (selectedFile) {
-                  setFile(selectedFile);
-                  setFilePreview(URL.createObjectURL(selectedFile));
-                }
-              }}
-            />
-            <label
-              htmlFor="file-upload"
-              className="text-gray-500 hover:text-blue-500 cursor-pointer"
-            >
-              <FiPaperclip className="text-xl" title="Attach file" />
-            </label>
             <Textarea
               ref={textareaRef}
               value={message}

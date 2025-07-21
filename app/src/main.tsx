@@ -1,4 +1,4 @@
-import { StrictMode } from "react";
+
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import { Provider } from "react-redux";
@@ -9,7 +9,7 @@ import { ThemeProvider } from "./components/theme-provider.tsx";
 import { Toaster } from "react-hot-toast";
 
 createRoot(document.getElementById("root")!).render(
-  <StrictMode>
+  
     <Provider store={store}>
       <ChatProvider>
         <ThemeProvider>
@@ -18,5 +18,5 @@ createRoot(document.getElementById("root")!).render(
       </ChatProvider>
       <Toaster />
     </Provider>
-  </StrictMode>
+  
 );

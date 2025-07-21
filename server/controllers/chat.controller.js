@@ -119,7 +119,7 @@ export const getChatController = async (req, res) => {
 
 export const createGroupChatController = async (req, res) => {
   console.log(req.body);
-  
+
   if (!req.body.users || !req.body.chatName) {
     return res.status(400).send("Please fill all the fields");
   }
@@ -178,28 +178,41 @@ export const renameGroupController = async (req, res) => {
 
 export const addToGroupController = async (req, res) => {
   try {
-    const { chatId, userId } = req.body;
-    try {
-      const added = await Chat.findByIdAndUpdate(
-        chatId,
-        {
-          $push: { users: userId },
-        },
-        {
-          new: true,
-        }
-      )
-        .populate("users", "-password")
-        .populate("groupAdmin", "-password");
-
-      if (!added) {
-        res.status(404).send("Chat not found");
-      } else {
-        res.status(200).json(added);
-      }
-    } catch (error) {
-      res.status(400).send("Failed to add user to group");
+    const { chatId, userIds } = req.body;
+    console.log(userIds);
+    
+    if (!Array.isArray(userIds)) {
+      return res.status(400).json({ message: "not a array" });
     }
+    const chat = await Chat.findById(chatId);
+    if (!chat) {
+      return res.status(404).json({ message: "Chat not found" });
+    }
+    const existingUserIds = chat.users.map((userId) => userId.toString());
+    const newUserIds = userIds.filter((id) => !existingUserIds.includes(id));
+
+    if (newUserIds.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "All users are already in the group" });
+    }
+
+    const updatedChat = await Chat.findByIdAndUpdate(
+      chatId,
+      {
+        $addToSet: { users: { $each: newUserIds } },
+      },
+      {
+        new: true,
+      }
+    )
+      .populate("users", "-password")
+      .populate("groupAdmin", "-password");
+
+    return res.status(200).json({
+      message: "Users added successfully",
+      data: updatedChat,
+    });
   } catch (error) {
     res.status(400).send("Failed to add to group");
   }

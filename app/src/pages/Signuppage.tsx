@@ -19,8 +19,6 @@ const Signuppage = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSignup = async () => {
-    console.log("processing signup");
-
     if (!firstName || !lastName || !email || !password) {
       toast.error("Please fill all fields");
       return;
@@ -28,9 +26,8 @@ const Signuppage = () => {
     try {
       const response = await register({ firstName, lastName, email, password });
       if (response) {
-        console.log(response);
         toast.success("Registration Successful!");
-        navigate("/login")
+        navigate("/login");
       }
     } catch (error) {
       console.log(error);
@@ -64,7 +61,6 @@ const Signuppage = () => {
           <form
             onClick={(e) => {
               e.preventDefault();
-              
             }}
           >
             <div className="mb-6">
@@ -122,7 +118,7 @@ const Signuppage = () => {
               </label>
               <div className="relative mt-2">
                 <Input
-                  type={showPassword? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   id="password"
                   placeholder="Enter your password"
                   className="p-3 pl-10 border rounded-xl w-full focus:ring-2 focus:ring-blue-500"
